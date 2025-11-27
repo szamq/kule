@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <title>Mieszanka Auto-Lock</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 15px;
+            color: #333;
+            overscroll-behavior: none; 
+            padding-bottom: 30px;
+        }
+        h1 { font-size: 20px; text-align: center; margin-bottom: 10px; color: #2c3e50; }
+        
+        .card {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 15px;
+        }
+
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 14px; }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 22px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            text-align: center;
+            font-weight: bold;
+            color: #2c3e50;
+            background: #fff;
+        }
+        input:focus { border-color: #3498db; outline: none; }
+
+        .result-box {
+            background-color: #ecf0f1;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .result-name { font-size: 15px; font-weight: 600; }
+        .result-value { font-size: 18px; font-weight: bold; color: #2980b9; }
+        
+        .total-row { background-color: #d5f5e3; border: 1px solid #2ecc71; margin-top: 15px;}
+        .total-row .result-value { color: #27ae60; }
+
+        .poly-row { border-left: 4px solid #8e44ad; }
+        .oil-row { border-left: 4px solid #f39c12; }
+        .water-row { border-left: 4px solid #3498db; }
+
+        .settings-toggle {
+            text-align: center;
+            color: #95a5a6;
+            padding: 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        #settings { display: none; margin-top: 5px; background: #fff; padding: 10px; border-radius: 10px; }
+        .row { display: flex; gap: 5px; }
+        .setting-input { flex: 1; }
+        .setting-input input { font-size: 14px; padding: 5px; width: 100%; }
+        
+        /* Stopka ze statusem */
+        .status-footer {
+            text-align: center;
+            font-size: 10px;
+            color: #bdc3c7;
+            margin-top: 20px;
+        }
+        .status-active { color: #27ae60; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>Kalkulator Mieszanki</h1>
+
+    <div class="card">
+        <label>MASA SUCHA (g):</label>
+        <input type="number" id="dryMass" placeholder="0" inputmode="decimal" oninput="calculate()">
+    </div>
+
+    <div class="card">
+        <label>Składniki do dodania:</label>
+        
+        <div class="result-box poly-row">
+            <span class="result-name">Poly 80</span>
+            <span class="result-value" id="resPoly">0.00</span>
+        </div>
+        
+        <div class="result-box oil-row">
+            <span class="result-name">Olej</span>
+            <span class="result-value" id="resOil">0.00</span>
+        </div>
+        
+        <div class="result-box water-row">
+            <span class="result-name">Woda</span>
+            <span class="result-value" id="resWater">0.00</span>
+        </div>
+
+        <div class="result-box total-row">
+            <span class="result-name">RAZEM</span>
+            <span class="result-value" id="resTotal">0.00</span>
+        </div>
+    </div>
+
+    <div class="settings-toggle" onclick="toggleSettings()">⚙️ Ustawienia</div>
+    
+    <div id="settings">
+        <label>Mnożnik (g/g):</label>
+        <input type="number" id="factor" value="0.0165" step="0.0001" oninput="calculate()">
+        
+        <label style="margin-top:10px">Proporcje:</label>
+        <div class="row">
+            <div class="setting-input"><input type="number" id="ratioPoly" value="8" oninput="calculate()"></div>
+            <div class="setting-input"><input type="number" id="ratioOil" value="7" oninput="calculate()"></div>
+            <div class="setting-input"><input type="number" id="ratioWater" value="6" oninput="calculate()"></div>
+        </div>
+    </div>
+
+    <div class="status-footer" id="lockStatus">💡 Dotknij ekranu, aby zablokować wygaszanie</div>
+
+    <script>
+        // --- KALKULACJE ---
+        function calculate() {
+            const dryMass = parseFloat(document.getElementById('dryMass').value) || 0;
+            const factor = parseFloat(document.getElementById('factor').value) || 0;
+            const rPoly = parseFloat(document.getElementById('ratioPoly').value) || 0;
+            const rOil = parseFloat(document.getElementById('ratioOil').value) || 0;
+            const rWater = parseFloat(document.getElementById('ratioWater').value) || 0;
+
+            const totalMixNeeded = dryMass * factor;
+            const totalParts = rPoly + rOil + rWater;
+
+            let wPoly = 0, wOil = 0, wWater = 0;
+
+            if (totalParts > 0) {
+                wPoly = (totalMixNeeded / totalParts) * rPoly;
+                wOil = (totalMixNeeded / totalParts) * rOil;
+                wWater = (totalMixNeeded / totalParts) * rWater;
+            }
+
+            document.getElementById('resPoly').innerText = wPoly.toFixed(2);
+            document.getElementById('resOil').innerText = wOil.toFixed(2);
+            document.getElementById('resWater').innerText = wWater.toFixed(2);
+            document.getElementById('resTotal').innerText = totalMixNeeded.toFixed(2);
+        }
+
+        function toggleSettings() {
+            const s = document.getElementById('settings');
+            s.style.display = s.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // --- AUTOMATYCZNA BLOKADA EKRANU (Wake Lock) ---
+        let wakeLock = null;
+        const statusText = document.getElementById('lockStatus');
+
+        async function enableWakeLock() {
+            if ('wakeLock' in navigator && wakeLock === null) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    statusText.innerHTML = "🔆 Ekran nie zgaśnie (Aktywne)";
+                    statusText.classList.add('status-active');
+                    
+                    // Jeśli system zrzuci blokadę (np. zmiana aplikacji), spróbuj przywrócić
+                    wakeLock.addEventListener('release', () => {
+                        wakeLock = null;
+                        statusText.innerHTML = "💡 Dotknij ekranu, aby zablokować wygaszanie";
+                        statusText.classList.remove('status-active');
+                    });
+                } catch (err) {
+                    console.log('Błąd Wake Lock:', err);
+                }
+            }
+        }
+
+        // Próbuj włączyć blokadę przy jakimkolwiek dotknięciu
+        ['click', 'touchstart', 'keydown'].forEach(evt => 
+            document.addEventListener(evt, enableWakeLock, {once: false})
+        );
+
+        // Próbuj przywrócić blokadę po powrocie do aplikacji
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock === null && document.visibilityState === 'visible') {
+                await enableWakeLock();
+            }
+        });
+    </script>
+</body>
+</html>
