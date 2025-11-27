@@ -8,7 +8,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-    <title>Mieszanka Auto-Lock</title>
+    <title>Kalkulator Produkcji</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -17,7 +17,7 @@
             padding: 15px;
             color: #333;
             overscroll-behavior: none; 
-            padding-bottom: 30px;
+            padding-bottom: 50px;
         }
         h1 { font-size: 20px; text-align: center; margin-bottom: 10px; color: #2c3e50; }
         
@@ -27,6 +27,15 @@
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             margin-bottom: 15px;
+        }
+        
+        .card-header {
+            font-size: 16px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 8px;
         }
 
         label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 14px; }
@@ -48,7 +57,7 @@
         .result-box {
             background-color: #ecf0f1;
             border-radius: 8px;
-            padding: 12px;
+            padding: 10px 12px;
             margin-top: 8px;
             display: flex;
             justify-content: space-between;
@@ -57,13 +66,68 @@
         .result-name { font-size: 15px; font-weight: 600; }
         .result-value { font-size: 18px; font-weight: bold; color: #2980b9; }
         
-        .total-row { background-color: #d5f5e3; border: 1px solid #2ecc71; margin-top: 15px;}
+        /* Style wierszy */
+        .dry-row { border-left: 4px solid #7f8c8d; background-color: #fdfdfd; border-bottom: 1px solid #eee; }
+        .dry-row .result-value { color: #555; }
+        
+        /* Zaktualizowany styl dla TOTAL (teraz na górze) */
+        .total-row { 
+            background-color: #d5f5e3; 
+            border: 1px solid #2ecc71; 
+            margin-top: 0; 
+            margin-bottom: 15px; /* odstęp od reszty listy */
+        }
         .total-row .result-value { color: #27ae60; }
 
         .poly-row { border-left: 4px solid #8e44ad; }
         .oil-row { border-left: 4px solid #f39c12; }
+        .scent-row { border-left: 4px solid #e91e63; }
         .water-row { border-left: 4px solid #3498db; }
 
+        /* --- STYLE DLA BARWNIKÓW --- */
+        .dye-section {
+            background-color: #eaf6ff;
+            border: 1px solid #b3d9f2;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 15px;
+        }
+        .dye-title {
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 8px;
+            color: #2980b9;
+        }
+        .dye-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .dye-item {
+            background: white;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #eee;
+        }
+        .dye-label { font-size: 11px; font-weight: bold; display: block; margin-bottom: 4px; }
+        .dye-input { 
+            width: 100% !important; 
+            padding: 5px !important; 
+            font-size: 16px !important; 
+            height: 35px;
+            margin-bottom: 4px;
+        }
+        .dye-result { font-size: 14px; font-weight: bold; color: #333; display: block; }
+        
+        /* Kolory inputów barwników */
+        .dye-red { border-bottom: 3px solid #e74c3c !important; color: #c0392b !important; }
+        .dye-blue { border-bottom: 3px solid #3498db !important; color: #2980b9 !important; }
+        .dye-yellow { border-bottom: 3px solid #f1c40f !important; color: #f39c12 !important; }
+        .dye-magic { border-bottom: 3px solid #9b59b6 !important; color: #8e44ad !important; }
+
+        /* Ustawienia */
         .settings-toggle {
             text-align: center;
             color: #95a5a6;
@@ -72,30 +136,59 @@
             cursor: pointer;
         }
         #settings { display: none; margin-top: 5px; background: #fff; padding: 10px; border-radius: 10px; }
-        .row { display: flex; gap: 5px; }
-        .setting-input { flex: 1; }
-        .setting-input input { font-size: 14px; padding: 5px; width: 100%; }
         
-        /* Stopka ze statusem */
-        .status-footer {
-            text-align: center;
-            font-size: 10px;
-            color: #bdc3c7;
-            margin-top: 20px;
-        }
+        .row { display: flex; gap: 5px; align-items: center; }
+        .setting-input { flex: 1; }
+        .setting-input input { font-size: 14px; padding: 8px; width: 100%; text-align: center; }
+        .small-text { font-size: 10px; color: #7f8c8d; text-align: center; margin-bottom: 2px; text-transform: uppercase;}
+
+        .status-footer { text-align: center; font-size: 10px; color: #bdc3c7; margin-top: 20px; }
         .status-active { color: #27ae60; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h1>Kalkulator Mieszanki</h1>
+    <h1>Kalkulator Produkcji</h1>
 
+    <!-- 1. SEKACJA KUL (SUCHE SKŁADNIKI) -->
     <div class="card">
-        <label>MASA SUCHA (g):</label>
-        <input type="number" id="dryMass" placeholder="0" inputmode="decimal" oninput="calculate()">
+        <div class="card-header">1. SUCHE SKŁADNIKI</div>
+        <label>Ilość kul do zrobienia (szt):</label>
+        <input type="number" id="ballCount" placeholder="0" inputmode="numeric" oninput="calculateFromBalls()">
+        
+        <div style="margin-top: 15px;">
+            <div class="result-box dry-row">
+                <span class="result-name">Soda (900g/szt)</span>
+                <span class="result-value" id="resSoda">0</span>
+            </div>
+            <div class="result-box dry-row">
+                <span class="result-name">Kwasek (400g/szt)</span>
+                <span class="result-value" id="resCitric">0</span>
+            </div>
+            <div class="result-box dry-row">
+                <span class="result-name">Mąka (50g/szt)</span>
+                <span class="result-value" id="resFlour">0</span>
+            </div>
+        </div>
     </div>
 
+    <!-- 2. MASA SUCHA CAŁKOWITA -->
+    <div class="card" style="border: 2px dashed #bdc3c7;">
+        <label>MASA SUCHA RAZEM (g):</label>
+        <input type="number" id="dryMass" placeholder="0" inputmode="decimal" oninput="calculateWetMix()">
+        <div style="font-size:11px; color:#999; text-align:center; margin-top:5px;">(Wynik z kul powyżej lub wpisz ręcznie)</div>
+    </div>
+
+    <!-- 3. SEKCJA PŁYNNA (MOKRE SKŁADNIKI) -->
     <div class="card">
+        <div class="card-header">2. MOKRE SKŁADNIKI</div>
+        
+        <!-- RAZEM PŁYNY PRZENIESIONE NA GÓRĘ -->
+        <div class="result-box total-row">
+            <span class="result-name">RAZEM PŁYNY</span>
+            <span class="result-value" id="resTotal">0.00</span>
+        </div>
+
         <label>Składniki do dodania:</label>
         
         <div class="result-box poly-row">
@@ -107,58 +200,184 @@
             <span class="result-name">Olej</span>
             <span class="result-value" id="resOil">0.00</span>
         </div>
+
+        <div class="result-box scent-row">
+            <span class="result-name">Zapach</span>
+            <span class="result-value" id="resScent">0.00</span>
+        </div>
         
         <div class="result-box water-row">
-            <span class="result-name">Woda</span>
+            <span class="result-name">Woda / Barwnik</span>
             <span class="result-value" id="resWater">0.00</span>
         </div>
 
-        <div class="result-box total-row">
-            <span class="result-name">RAZEM</span>
-            <span class="result-value" id="resTotal">0.00</span>
+        <!-- MIESZALNIK BARWNIKÓW -->
+        <div class="dye-section">
+            <div class="dye-title">🎨 MIESZALNIK BARWNIKÓW (Podział Wody)</div>
+            <div style="text-align:center; font-size:10px; color:#666; margin-bottom:8px;">Wpisz ilość kropli, aby podzielić powyższą wodę na gramy</div>
+            
+            <div class="dye-grid">
+                <!-- Red33 -->
+                <div class="dye-item">
+                    <span class="dye-label" style="color:#c0392b;">RED 33</span>
+                    <input type="number" class="dye-input dye-red" id="dropRed" placeholder="0" oninput="calculateDyes()">
+                    <span class="dye-result" id="gRed">0.00g</span>
+                </div>
+                
+                <!-- Blue -->
+                <div class="dye-item">
+                    <span class="dye-label" style="color:#2980b9;">NIEBIESKI</span>
+                    <input type="number" class="dye-input dye-blue" id="dropBlue" placeholder="0" oninput="calculateDyes()">
+                    <span class="dye-result" id="gBlue">0.00g</span>
+                </div>
+                
+                <!-- Yellow -->
+                <div class="dye-item">
+                    <span class="dye-label" style="color:#f39c12;">ŻÓŁTY</span>
+                    <input type="number" class="dye-input dye-yellow" id="dropYellow" placeholder="0" oninput="calculateDyes()">
+                    <span class="dye-result" id="gYellow">0.00g</span>
+                </div>
+                
+                <!-- Magic -->
+                <div class="dye-item">
+                    <span class="dye-label" style="color:#8e44ad;">MAGICZNY</span>
+                    <input type="number" class="dye-input dye-magic" id="dropMagic" placeholder="0" oninput="calculateDyes()">
+                    <span class="dye-result" id="gMagic">0.00g</span>
+                </div>
+            </div>
         </div>
+
     </div>
 
+    <!-- USTAWIENIA -->
     <div class="settings-toggle" onclick="toggleSettings()">⚙️ Ustawienia</div>
     
     <div id="settings">
-        <label>Mnożnik (g/g):</label>
-        <input type="number" id="factor" value="0.0165" step="0.0001" oninput="calculate()">
+        <label>Mnożnik płynów (g/g):</label>
+        <input type="number" id="factor" value="0.0165" step="0.0001" oninput="calculateWetMix()">
         
-        <label style="margin-top:10px">Proporcje:</label>
+        <label style="margin-top:15px">Proporcje płynów:</label>
         <div class="row">
-            <div class="setting-input"><input type="number" id="ratioPoly" value="8" oninput="calculate()"></div>
-            <div class="setting-input"><input type="number" id="ratioOil" value="7" oninput="calculate()"></div>
-            <div class="setting-input"><input type="number" id="ratioWater" value="6" oninput="calculate()"></div>
+            <div class="setting-input">
+                <div class="small-text">Poly</div>
+                <input type="number" id="ratioPoly" value="8" oninput="calculateWetMix()">
+            </div>
+            <div class="setting-input">
+                <div class="small-text">Olej</div>
+                <input type="number" id="ratioOil" value="6" oninput="calculateWetMix()">
+            </div>
+            <div class="setting-input">
+                <div class="small-text">Zapach</div>
+                <input type="number" id="ratioScent" value="2" oninput="calculateWetMix()">
+            </div>
+            <div class="setting-input">
+                <div class="small-text">Woda</div>
+                <input type="number" id="ratioWater" value="6" oninput="calculateWetMix()">
+            </div>
+        </div>
+        
+        <label style="margin-top:15px">Skład 1 kuli (suche):</label>
+        <div class="row">
+            <div class="setting-input">
+                <div class="small-text">Soda</div>
+                <input type="number" id="ballSoda" value="900" oninput="calculateFromBalls()">
+            </div>
+            <div class="setting-input">
+                <div class="small-text">Kwasek</div>
+                <input type="number" id="ballCitric" value="400" oninput="calculateFromBalls()">
+            </div>
+            <div class="setting-input">
+                <div class="small-text">Mąka</div>
+                <input type="number" id="ballFlour" value="50" oninput="calculateFromBalls()">
+            </div>
         </div>
     </div>
 
     <div class="status-footer" id="lockStatus">💡 Dotknij ekranu, aby zablokować wygaszanie</div>
 
     <script>
-        // --- KALKULACJE ---
-        function calculate() {
+        // Zmienna globalna przechowująca aktualną masę wody
+        let currentWaterMass = 0;
+
+        // --- FUNKCJE OBLICZENIOWE ---
+
+        function calculateFromBalls() {
+            const balls = parseFloat(document.getElementById('ballCount').value) || 0;
+            const gSoda = parseFloat(document.getElementById('ballSoda').value) || 900;
+            const gCitric = parseFloat(document.getElementById('ballCitric').value) || 400;
+            const gFlour = parseFloat(document.getElementById('ballFlour').value) || 50;
+
+            const totSoda = balls * gSoda;
+            const totCitric = balls * gCitric;
+            const totFlour = balls * gFlour;
+            const totDry = totSoda + totCitric + totFlour;
+
+            document.getElementById('resSoda').innerText = totSoda.toLocaleString();
+            document.getElementById('resCitric').innerText = totCitric.toLocaleString();
+            document.getElementById('resFlour').innerText = totFlour.toLocaleString();
+
+            document.getElementById('dryMass').value = totDry;
+            calculateWetMix();
+        }
+
+        function calculateWetMix() {
             const dryMass = parseFloat(document.getElementById('dryMass').value) || 0;
             const factor = parseFloat(document.getElementById('factor').value) || 0;
+            
             const rPoly = parseFloat(document.getElementById('ratioPoly').value) || 0;
             const rOil = parseFloat(document.getElementById('ratioOil').value) || 0;
+            const rScent = parseFloat(document.getElementById('ratioScent').value) || 0;
             const rWater = parseFloat(document.getElementById('ratioWater').value) || 0;
 
             const totalMixNeeded = dryMass * factor;
-            const totalParts = rPoly + rOil + rWater;
+            const totalParts = rPoly + rOil + rScent + rWater;
 
-            let wPoly = 0, wOil = 0, wWater = 0;
+            let wPoly = 0, wOil = 0, wScent = 0, wWater = 0;
 
             if (totalParts > 0) {
-                wPoly = (totalMixNeeded / totalParts) * rPoly;
-                wOil = (totalMixNeeded / totalParts) * rOil;
-                wWater = (totalMixNeeded / totalParts) * rWater;
+                const onePart = totalMixNeeded / totalParts;
+                wPoly = onePart * rPoly;
+                wOil = onePart * rOil;
+                wScent = onePart * rScent;
+                wWater = onePart * rWater;
             }
+
+            // Zapisujemy wodę do zmiennej globalnej
+            currentWaterMass = wWater;
 
             document.getElementById('resPoly').innerText = wPoly.toFixed(2);
             document.getElementById('resOil').innerText = wOil.toFixed(2);
+            document.getElementById('resScent').innerText = wScent.toFixed(2);
             document.getElementById('resWater').innerText = wWater.toFixed(2);
             document.getElementById('resTotal').innerText = totalMixNeeded.toFixed(2);
+
+            // Przelicz barwniki po zmianie ilości wody
+            calculateDyes();
+        }
+
+        function calculateDyes() {
+            // Pobierz ilość kropli
+            const dRed = parseFloat(document.getElementById('dropRed').value) || 0;
+            const dBlue = parseFloat(document.getElementById('dropBlue').value) || 0;
+            const dYellow = parseFloat(document.getElementById('dropYellow').value) || 0;
+            const dMagic = parseFloat(document.getElementById('dropMagic').value) || 0;
+
+            const totalDrops = dRed + dBlue + dYellow + dMagic;
+
+            let gRed = 0, gBlue = 0, gYellow = 0, gMagic = 0;
+
+            if (totalDrops > 0 && currentWaterMass > 0) {
+                // Oblicz udział każdego barwnika w całkowitej masie wody
+                gRed = (dRed / totalDrops) * currentWaterMass;
+                gBlue = (dBlue / totalDrops) * currentWaterMass;
+                gYellow = (dYellow / totalDrops) * currentWaterMass;
+                gMagic = (dMagic / totalDrops) * currentWaterMass;
+            }
+
+            document.getElementById('gRed').innerText = gRed.toFixed(2) + 'g';
+            document.getElementById('gBlue').innerText = gBlue.toFixed(2) + 'g';
+            document.getElementById('gYellow').innerText = gYellow.toFixed(2) + 'g';
+            document.getElementById('gMagic').innerText = gMagic.toFixed(2) + 'g';
         }
 
         function toggleSettings() {
@@ -166,7 +385,7 @@
             s.style.display = s.style.display === 'block' ? 'none' : 'block';
         }
 
-        // --- AUTOMATYCZNA BLOKADA EKRANU (Wake Lock) ---
+        // --- AUTOMATYCZNA BLOKADA EKRANU ---
         let wakeLock = null;
         const statusText = document.getElementById('lockStatus');
 
@@ -176,29 +395,17 @@
                     wakeLock = await navigator.wakeLock.request('screen');
                     statusText.innerHTML = "🔆 Ekran nie zgaśnie (Aktywne)";
                     statusText.classList.add('status-active');
-                    
-                    // Jeśli system zrzuci blokadę (np. zmiana aplikacji), spróbuj przywrócić
                     wakeLock.addEventListener('release', () => {
                         wakeLock = null;
                         statusText.innerHTML = "💡 Dotknij ekranu, aby zablokować wygaszanie";
                         statusText.classList.remove('status-active');
                     });
-                } catch (err) {
-                    console.log('Błąd Wake Lock:', err);
-                }
+                } catch (err) { console.log('Błąd Wake Lock:', err); }
             }
         }
-
-        // Próbuj włączyć blokadę przy jakimkolwiek dotknięciu
-        ['click', 'touchstart', 'keydown'].forEach(evt => 
-            document.addEventListener(evt, enableWakeLock, {once: false})
-        );
-
-        // Próbuj przywrócić blokadę po powrocie do aplikacji
+        ['click', 'touchstart', 'keydown'].forEach(evt => document.addEventListener(evt, enableWakeLock, {once: false}));
         document.addEventListener('visibilitychange', async () => {
-            if (wakeLock === null && document.visibilityState === 'visible') {
-                await enableWakeLock();
-            }
+            if (wakeLock === null && document.visibilityState === 'visible') await enableWakeLock();
         });
     </script>
 </body>
