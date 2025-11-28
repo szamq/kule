@@ -17,7 +17,7 @@
             padding: 15px;
             color: #333;
             overscroll-behavior: none; 
-            padding-bottom: 50px;
+            padding-bottom: 60px;
         }
         h1 { font-size: 20px; text-align: center; margin-bottom: 10px; color: #2c3e50; }
         
@@ -66,16 +66,14 @@
         .result-name { font-size: 15px; font-weight: 600; }
         .result-value { font-size: 18px; font-weight: bold; color: #2980b9; }
         
-        /* Style wierszy */
         .dry-row { border-left: 4px solid #7f8c8d; background-color: #fdfdfd; border-bottom: 1px solid #eee; }
         .dry-row .result-value { color: #555; }
         
-        /* Zaktualizowany styl dla TOTAL (teraz na górze) */
         .total-row { 
             background-color: #d5f5e3; 
             border: 1px solid #2ecc71; 
             margin-top: 0; 
-            margin-bottom: 15px; /* odstęp od reszty listy */
+            margin-bottom: 15px; 
         }
         .total-row .result-value { color: #27ae60; }
 
@@ -84,7 +82,7 @@
         .scent-row { border-left: 4px solid #e91e63; }
         .water-row { border-left: 4px solid #3498db; }
 
-        /* --- STYLE DLA BARWNIKÓW --- */
+        /* --- SEKCJE --- */
         .dye-section {
             background-color: #eaf6ff;
             border: 1px solid #b3d9f2;
@@ -92,12 +90,20 @@
             padding: 10px;
             margin-top: 15px;
         }
-        .dye-title {
+        .split-section {
+            background-color: #fff8e1;
+            border: 1px solid #ffe082;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .section-title {
             font-size: 12px;
             font-weight: bold;
             text-align: center;
             margin-bottom: 8px;
-            color: #2980b9;
+            color: #555;
+            text-transform: uppercase;
         }
         .dye-grid {
             display: grid;
@@ -119,13 +125,39 @@
             height: 35px;
             margin-bottom: 4px;
         }
-        .dye-result { font-size: 14px; font-weight: bold; color: #333; display: block; }
         
+        /* Wyniki podziału */
+        .split-total-label {
+            display: block;
+            font-size: 10px;
+            color: #888;
+            margin-top: 2px;
+        }
+        .split-total-value {
+            display: block;
+            font-size: 16px;
+            font-weight: bold;
+            color: #d35400;
+        }
+
         /* Kolory inputów barwników */
         .dye-red { border-bottom: 3px solid #e74c3c !important; color: #c0392b !important; }
         .dye-blue { border-bottom: 3px solid #3498db !important; color: #2980b9 !important; }
         .dye-yellow { border-bottom: 3px solid #f1c40f !important; color: #f39c12 !important; }
         .dye-magic { border-bottom: 3px solid #9b59b6 !important; color: #8e44ad !important; }
+        
+        .split-input { border-bottom: 3px solid #7f8c8d !important; color: #333 !important; }
+
+        .remaining-box {
+            background: #333;
+            color: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        .remaining-box.negative { background: #c0392b; }
 
         /* Ustawienia */
         .settings-toggle {
@@ -183,7 +215,6 @@
     <div class="card">
         <div class="card-header">2. MOKRE SKŁADNIKI</div>
         
-        <!-- RAZEM PŁYNY PRZENIESIONE NA GÓRĘ -->
         <div class="result-box total-row">
             <span class="result-name">RAZEM PŁYNY</span>
             <span class="result-value" id="resTotal">0.00</span>
@@ -213,40 +244,86 @@
 
         <!-- MIESZALNIK BARWNIKÓW -->
         <div class="dye-section">
-            <div class="dye-title">🎨 MIESZALNIK BARWNIKÓW (Podział Wody)</div>
-            <div style="text-align:center; font-size:10px; color:#666; margin-bottom:8px;">Wpisz ilość kropli, aby podzielić powyższą wodę na gramy</div>
+            <div class="section-title">🎨 MIESZALNIK BARWNIKÓW (KROPLE)</div>
             
             <div class="dye-grid">
-                <!-- Red33 -->
                 <div class="dye-item">
                     <span class="dye-label" style="color:#c0392b;">RED 33</span>
                     <input type="number" class="dye-input dye-red" id="dropRed" placeholder="0" oninput="calculateDyes()">
-                    <span class="dye-result" id="gRed">0.00g</span>
+                    <span id="gRed" style="font-weight:bold; font-size:14px;">0.00g</span>
                 </div>
-                
-                <!-- Blue -->
                 <div class="dye-item">
                     <span class="dye-label" style="color:#2980b9;">NIEBIESKI</span>
                     <input type="number" class="dye-input dye-blue" id="dropBlue" placeholder="0" oninput="calculateDyes()">
-                    <span class="dye-result" id="gBlue">0.00g</span>
+                    <span id="gBlue" style="font-weight:bold; font-size:14px;">0.00g</span>
                 </div>
-                
-                <!-- Yellow -->
                 <div class="dye-item">
                     <span class="dye-label" style="color:#f39c12;">ŻÓŁTY</span>
                     <input type="number" class="dye-input dye-yellow" id="dropYellow" placeholder="0" oninput="calculateDyes()">
-                    <span class="dye-result" id="gYellow">0.00g</span>
+                    <span id="gYellow" style="font-weight:bold; font-size:14px;">0.00g</span>
                 </div>
-                
-                <!-- Magic -->
                 <div class="dye-item">
                     <span class="dye-label" style="color:#8e44ad;">MAGICZNY</span>
                     <input type="number" class="dye-input dye-magic" id="dropMagic" placeholder="0" oninput="calculateDyes()">
-                    <span class="dye-result" id="gMagic">0.00g</span>
+                    <span id="gMagic" style="font-weight:bold; font-size:14px;">0.00g</span>
                 </div>
             </div>
         </div>
+    </div>
 
+    <!-- 4. PODZIAŁ GOTOWEJ MASY -->
+    <div class="card">
+        <div class="card-header">3. PODZIAŁ MASY SUCHEJ</div>
+        
+        <!-- Wyświetlanie bazy do podziału -->
+        <div class="result-box" style="background-color: #fcf3cf; border: 1px solid #f1c40f;">
+            <span class="result-name">Masa w misce (Suche)</span>
+            <span class="result-value" id="massForSplit" style="color: #d35400;">0.00</span>
+        </div>
+
+        <div class="split-section" style="margin-top:10px;">
+            <div class="section-title">Ile gramów koloru NA 1 KULĘ?</div>
+            <div class="dye-grid">
+                
+                <!-- Kolor 1 -->
+                <div class="dye-item">
+                    <span class="dye-label">Kolor 1 (g/szt)</span>
+                    <input type="number" class="dye-input split-input" id="split1" placeholder="0" oninput="calculateSplit()">
+                    <span class="split-total-label">RAZEM DLA WSZYSTKICH:</span>
+                    <span class="split-total-value" id="totalSplit1">0 g</span>
+                </div>
+                
+                <!-- Kolor 2 -->
+                <div class="dye-item">
+                    <span class="dye-label">Kolor 2 (g/szt)</span>
+                    <input type="number" class="dye-input split-input" id="split2" placeholder="0" oninput="calculateSplit()">
+                    <span class="split-total-label">RAZEM DLA WSZYSTKICH:</span>
+                    <span class="split-total-value" id="totalSplit2">0 g</span>
+                </div>
+                
+                <!-- Kolor 3 -->
+                <div class="dye-item">
+                    <span class="dye-label">Kolor 3 (g/szt)</span>
+                    <input type="number" class="dye-input split-input" id="split3" placeholder="0" oninput="calculateSplit()">
+                    <span class="split-total-label">RAZEM DLA WSZYSTKICH:</span>
+                    <span class="split-total-value" id="totalSplit3">0 g</span>
+                </div>
+                
+                <!-- Kolor 4 -->
+                <div class="dye-item">
+                    <span class="dye-label">Kolor 4 (g/szt)</span>
+                    <input type="number" class="dye-input split-input" id="split4" placeholder="0" oninput="calculateSplit()">
+                    <span class="split-total-label">RAZEM DLA WSZYSTKICH:</span>
+                    <span class="split-total-value" id="totalSplit4">0 g</span>
+                </div>
+
+            </div>
+
+            <div class="remaining-box" id="remainBox">
+                <span>POZOSTAŁO W MISCE:</span>
+                <span id="resRemain">0.00</span>
+            </div>
+        </div>
     </div>
 
     <!-- USTAWIENIA -->
@@ -264,7 +341,7 @@
             </div>
             <div class="setting-input">
                 <div class="small-text">Olej</div>
-                <input type="number" id="ratioOil" value="6" oninput="calculateWetMix()">
+                <input type="number" id="ratioOil" value="5" oninput="calculateWetMix()">
             </div>
             <div class="setting-input">
                 <div class="small-text">Zapach</div>
@@ -344,6 +421,9 @@
 
             // Zapisujemy wodę do zmiennej globalnej
             currentWaterMass = wWater;
+            
+            // --- AKTUALIZACJA SEKCJI PODZIAŁU (TYLKO SUCHE) ---
+            document.getElementById('massForSplit').innerText = dryMass.toLocaleString() + ' g';
 
             document.getElementById('resPoly').innerText = wPoly.toFixed(2);
             document.getElementById('resOil').innerText = wOil.toFixed(2);
@@ -351,12 +431,12 @@
             document.getElementById('resWater').innerText = wWater.toFixed(2);
             document.getElementById('resTotal').innerText = totalMixNeeded.toFixed(2);
 
-            // Przelicz barwniki po zmianie ilości wody
+            // Odśwież zależne kalkulacje
             calculateDyes();
+            calculateSplit();
         }
 
         function calculateDyes() {
-            // Pobierz ilość kropli
             const dRed = parseFloat(document.getElementById('dropRed').value) || 0;
             const dBlue = parseFloat(document.getElementById('dropBlue').value) || 0;
             const dYellow = parseFloat(document.getElementById('dropYellow').value) || 0;
@@ -367,7 +447,6 @@
             let gRed = 0, gBlue = 0, gYellow = 0, gMagic = 0;
 
             if (totalDrops > 0 && currentWaterMass > 0) {
-                // Oblicz udział każdego barwnika w całkowitej masie wody
                 gRed = (dRed / totalDrops) * currentWaterMass;
                 gBlue = (dBlue / totalDrops) * currentWaterMass;
                 gYellow = (dYellow / totalDrops) * currentWaterMass;
@@ -378,6 +457,50 @@
             document.getElementById('gBlue').innerText = gBlue.toFixed(2) + 'g';
             document.getElementById('gYellow').innerText = gYellow.toFixed(2) + 'g';
             document.getElementById('gMagic').innerText = gMagic.toFixed(2) + 'g';
+        }
+
+        function calculateSplit() {
+            // Pobieramy ilość kul (lub 1 jeśli brak, żeby pokazać cokolwiek, ale tutaj kluczowe jest mnożenie)
+            let balls = parseFloat(document.getElementById('ballCount').value);
+            // Jeśli nie podano kul, przyjmij 0 dla obliczeń totalnych
+            if (isNaN(balls)) balls = 0;
+
+            // Całkowita masa sucha w misce
+            const dryMass = parseFloat(document.getElementById('dryMass').value) || 0;
+
+            // Pobieramy wartości "na sztukę"
+            const s1_per = parseFloat(document.getElementById('split1').value) || 0;
+            const s2_per = parseFloat(document.getElementById('split2').value) || 0;
+            const s3_per = parseFloat(document.getElementById('split3').value) || 0;
+            const s4_per = parseFloat(document.getElementById('split4').value) || 0;
+            
+            // Obliczamy ile potrzeba masy na wszystkie kule
+            const s1_total = s1_per * balls;
+            const s2_total = s2_per * balls;
+            const s3_total = s3_per * balls;
+            const s4_total = s4_per * balls;
+
+            // Aktualizujemy wyświetlacze pod inputami
+            document.getElementById('totalSplit1').innerText = s1_total.toLocaleString() + ' g';
+            document.getElementById('totalSplit2').innerText = s2_total.toLocaleString() + ' g';
+            document.getElementById('totalSplit3').innerText = s3_total.toLocaleString() + ' g';
+            document.getElementById('totalSplit4').innerText = s4_total.toLocaleString() + ' g';
+
+            // Obliczamy pozostałość w misce
+            const usedTotal = s1_total + s2_total + s3_total + s4_total;
+            const remain = dryMass - usedTotal;
+            
+            const remEl = document.getElementById('resRemain');
+            const boxEl = document.getElementById('remainBox');
+            
+            remEl.innerText = remain.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2}) + ' g';
+            
+            if (remain < -0.1) { // mała tolerancja
+                boxEl.classList.add('negative');
+                remEl.innerText += " (BRAK!)";
+            } else {
+                boxEl.classList.remove('negative');
+            }
         }
 
         function toggleSettings() {
