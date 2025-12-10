@@ -207,8 +207,9 @@
     <!-- 2. MASA SUCHA CAŁKOWITA -->
     <div class="card" style="border: 2px dashed #bdc3c7;">
         <label>MASA SUCHA RAZEM (g):</label>
-        <input type="number" id="dryMass" placeholder="0" inputmode="decimal" oninput="calculateWetMix()">
-        <div style="font-size:11px; color:#999; text-align:center; margin-top:5px;">(Wynik z kul powyżej lub wpisz ręcznie)</div>
+        <!-- ZMIANA: Zmieniono oninput na calculateFromDryMass() -->
+        <input type="number" id="dryMass" placeholder="0" inputmode="decimal" oninput="calculateFromDryMass()">
+        <div style="font-size:11px; color:#999; text-align:center; margin-top:5px;">(Wpisz kule LUB masę całkowitą)</div>
     </div>
 
     <!-- 3. SEKCJA PŁYNNA (MOKRE SKŁADNIKI) -->
@@ -378,6 +379,7 @@
 
         // --- FUNKCJE OBLICZENIOWE ---
 
+        // 1. Obliczanie składników na podstawie ilości KUL
         function calculateFromBalls() {
             const balls = parseFloat(document.getElementById('ballCount').value) || 0;
             const gSoda = parseFloat(document.getElementById('ballSoda').value) || 900;
@@ -393,7 +395,39 @@
             document.getElementById('resCitric').innerText = totCitric.toLocaleString();
             document.getElementById('resFlour').innerText = totFlour.toLocaleString();
 
-            document.getElementById('dryMass').value = totDry;
+            document.getElementById('dryMass').value = totDry; // Aktualizuj pole masy całkowitej
+            calculateWetMix();
+        }
+
+        // 2. NOWA FUNKCJA: Obliczanie składników na podstawie SUCHEJ MASY (g)
+        function calculateFromDryMass() {
+            const dryMass = parseFloat(document.getElementById('dryMass').value) || 0;
+            
+            // Pobierz proporcje z ustawień
+            const gSoda = parseFloat(document.getElementById('ballSoda').value) || 900;
+            const gCitric = parseFloat(document.getElementById('ballCitric').value) || 400;
+            const gFlour = parseFloat(document.getElementById('ballFlour').value) || 50;
+
+            // Waga jednej pełnej jednostki (kuli) z ustawień
+            const oneUnitWeight = gSoda + gCitric + gFlour;
+
+            if (oneUnitWeight > 0) {
+                // Oblicz ilość kul (może być ułamek)
+                const calcBalls = dryMass / oneUnitWeight;
+                
+                // Oblicz składniki proporcjonalnie
+                const calcSoda = dryMass * (gSoda / oneUnitWeight);
+                const calcCitric = dryMass * (gCitric / oneUnitWeight);
+                const calcFlour = dryMass * (gFlour / oneUnitWeight);
+
+                // Aktualizuj widok
+                document.getElementById('ballCount').value = calcBalls.toFixed(2);
+                document.getElementById('resSoda').innerText = calcSoda.toLocaleString(undefined, {maximumFractionDigits: 1});
+                document.getElementById('resCitric').innerText = calcCitric.toLocaleString(undefined, {maximumFractionDigits: 1});
+                document.getElementById('resFlour').innerText = calcFlour.toLocaleString(undefined, {maximumFractionDigits: 1});
+            }
+
+            // Uruchom przeliczanie płynów (bo masa sucha się zmieniła)
             calculateWetMix();
         }
 
@@ -422,7 +456,7 @@
             // Zapisujemy wodę do zmiennej globalnej
             currentWaterMass = wWater;
             
-            // --- AKTUALIZACJA SEKCJI PODZIAŁU (TYLKO SUCHE) ---
+            // --- AKTUALIZACJA SEKCJI PODZIAŁU ---
             document.getElementById('massForSplit').innerText = dryMass.toLocaleString() + ' g';
 
             document.getElementById('resPoly').innerText = wPoly.toFixed(2);
@@ -460,7 +494,7 @@
         }
 
         function calculateSplit() {
-            // Pobieramy ilość kul (lub 1 jeśli brak, żeby pokazać cokolwiek, ale tutaj kluczowe jest mnożenie)
+            // Pobieramy ilość kul (lub 1 jeśli brak, żeby pokazać cokolwiek)
             let balls = parseFloat(document.getElementById('ballCount').value);
             // Jeśli nie podano kul, przyjmij 0 dla obliczeń totalnych
             if (isNaN(balls)) balls = 0;
